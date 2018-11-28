@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     }
     printf("accepted..\n");
    
-    dispatch(tp, serve_request, (void *) socket_talk);
+    dispatch(tp, serve_request, (void *) socket_talk,0);
    
   }
   destroy_threadpool(tp);
@@ -189,7 +189,7 @@ void serve_request(void* fd){
       // printf("Response: %s\n",response );
     }
   }
-  sleep(50);
+  sleep(10);
   close(socket_talk); 
   // if (request != NULL)
   //   free(request);

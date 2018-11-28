@@ -11,6 +11,7 @@
 #include <math.h>
 #include <list>
 #include <queue>
+#include <set>
 #include "threadpool.h"
 using namespace std;
 typedef struct {
@@ -19,6 +20,13 @@ typedef struct {
     int priority;
 } task;
 
+struct compare{
+bool operator()(const task &t1,const task &t2){
+  if(t1.priority<t2.priority)
+    return true;
+  return false;
+}
+};
 // // _threadpool is the internal threadpool structure that is
 // // cast to type "threadpool" before it given out to callers
 typedef struct _threadpool_st {
@@ -27,7 +35,7 @@ typedef struct _threadpool_st {
     int max_threads;
     int thread_count;
      int pending_task;
-    vector<task> request_queue;
+    multiset<task,compare> request_queue;
     vector<pthread_t> threads;
      pthread_mutex_t pool_mutex;
      pthread_cond_t cond;
@@ -57,6 +65,11 @@ static void* thread_function(void* th_pool){
         }
         thread_task.function=(*(pool->request_queue.begin())).function;
         thread_task.args=(*(pool->request_queue.begin())).args;
+
+        thread_task.priority=(*(pool->request_queue.begin())).priority;
+
+        cout<<"Args: "<<thread_task.args<<" priority: "<<thread_task.priority<<endl;
+
 
         (pool->request_queue).erase(pool->request_queue.begin());
         pool->pending_task--;
@@ -114,22 +127,23 @@ threadpool create_threadpool(int num_threads_in_pool) {
 
         pthread_mutex_init(&(pool->pool_mutex), NULL);
         pthread_cond_init(&(pool->cond), NULL);
-        cout<<"Idle Threads: "<<pool->idle_threads<<endl;
+        // cout<<"Idle Threads: "<<pool->idle_threads<<endl;
         for (int i = 0; i <pool->idle_threads; ++i)
         {
           /* code */
           pthread_create(&(pool->threads[i]),NULL,thread_function,static_cast<void *>(pool));
           pool->thread_count++;
         }
-        cout<<"Thread-count: "<<pool->thread_count<<endl;
+        // cout<<"Thread-count: "<<pool->thread_count<<endl;
  
 
   return (threadpool) pool;
 }
 
 
+
 void dispatch(threadpool from_me, dispatch_fn dispatch_to_here,
-	      void *arg) {
+	      void *arg,int priority) {
   _threadpool *pool = (_threadpool *) from_me;
 
   // add your code here to dispatch a thread
@@ -142,14 +156,16 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here,
 
   	task task_thread;
   	task_thread.function=dispatch_to_here;
-  	task_thread.args=arg;
+    task_thread.args=arg;
+  	task_thread.priority=priority;
   	
-  	(pool->request_queue).push_back(task_thread);
+  	// (pool->request_queue).push_back(task_thread);
+    (pool->request_queue).insert(task_thread);
   	pool->pending_task++;
   	//resize
-    cout<<"###############val: "<<(pool->thread_count*3)/4<<endl;
-    cout<<"###############working: "<<pool->working_threads<<endl;
-    cout<<"###############Thread count: "<<pool->thread_count<<endl;
+    // cout<<"###############val: "<<(pool->thread_count*3)/4<<endl;
+    // cout<<"###############working: "<<pool->working_threads<<endl;
+    // cout<<"###############Thread count: "<<pool->thread_count<<endl;
   	if(pool->working_threads==(pool->thread_count*3)/4)
   		{
   			int check=pool->idle_threads;

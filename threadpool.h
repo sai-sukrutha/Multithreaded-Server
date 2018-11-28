@@ -45,7 +45,7 @@ threadpool create_threadpool(int num_threads_in_pool);
  * "dispatch_to_here" with argument "arg".
  */
 void dispatch(threadpool from_me, dispatch_fn dispatch_to_here,
-	      void *arg);
+	      void *arg,int priority);
 
 /**
  * destroy_threadpool kills the threadpool, causing

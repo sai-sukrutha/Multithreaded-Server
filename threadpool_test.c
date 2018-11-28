@@ -29,26 +29,26 @@ void dispatch_to_me(void *arg) {
 int main(int argc, char **argv) {
   threadpool tp;
 
-  tp = create_threadpool(10);
+  tp = create_threadpool(2);
   // dispatch_to_me((void *)3);
   fprintf(stdout, "**main** dispatch 3\n");
-  dispatch(tp, dispatch_to_me, (void *) 3);
+  dispatch(tp, dispatch_to_me, (void *) 3,10);
   fprintf(stdout, "**main** dispatch 6\n");
-  dispatch(tp, dispatch_to_me, (void *) 6);
+  dispatch(tp, dispatch_to_me, (void *) 6,2);
   fprintf(stdout, "**main** dispatch 7\n");
-  dispatch(tp, dispatch_to_me, (void *) 7);
+  dispatch(tp, dispatch_to_me, (void *) 7,4);
 fprintf(stdout, "**main** dispatch 5\n");
-  dispatch(tp, dispatch_to_me, (void *) 5);
+  dispatch(tp, dispatch_to_me, (void *) 5,1);
   fprintf(stdout, "**main** dispatch 8\n");
-  dispatch(tp, dispatch_to_me, (void *) 8);
+  dispatch(tp, dispatch_to_me, (void *) 8,3);
   fprintf(stdout, "**main** dispatch 2\n");
-  dispatch(tp, dispatch_to_me, (void *) 2);
+  dispatch(tp, dispatch_to_me, (void *) 2,6);
     fprintf(stdout, "**main** dispatch 10\n");
-  dispatch(tp, dispatch_to_me, (void *) 10);
+  dispatch(tp, dispatch_to_me, (void *) 10,0);
   fprintf(stdout, "**main** dispatch 4\n");
-  dispatch(tp, dispatch_to_me, (void *) 4);
+  dispatch(tp, dispatch_to_me, (void *) 4,5);
   fprintf(stdout, "**main** dispatch 9\n");
-  dispatch(tp, dispatch_to_me, (void *) 9);
+  dispatch(tp, dispatch_to_me, (void *) 9,8);
   fprintf(stdout, "**main** done first\n");
 
   sleep(50);
@@ -56,11 +56,11 @@ fprintf(stdout, "**main** dispatch 5\n");
   destroy_threadpool(tp);
 
   fprintf(stdout, "**main** dispatch 3\n");
-  dispatch(tp, dispatch_to_me, (void *) 3);
+  dispatch(tp, dispatch_to_me, (void *) 3,6);
   fprintf(stdout, "**main** dispatch 6\n");
-  dispatch(tp, dispatch_to_me, (void *) 6);
+  dispatch(tp, dispatch_to_me, (void *) 6,9);
   fprintf(stdout, "**main** dispatch 7\n");
-  dispatch(tp, dispatch_to_me, (void *) 7);
+  dispatch(tp, dispatch_to_me, (void *) 7,1);
 
   fprintf(stdout, "**main done second\n");
   sleep(20);
