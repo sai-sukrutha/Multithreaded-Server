@@ -40,7 +40,7 @@ typedef struct _threadpool_st {
      pthread_mutex_t pool_mutex;
      pthread_cond_t cond;
     int working_threads;
-    int idle_threads;
+    int curr_threads;
     int destroy;
 
     int total;
@@ -49,9 +49,9 @@ typedef struct _threadpool_st {
 
 
 static void* thread_function(void* th_pool){
-      _threadpool* pool=(_threadpool*)th_pool;
-      task thread_task;
-      while(1){
+    _threadpool* pool=(_threadpool*)th_pool;
+    task thread_task;
+    while(1){
         pthread_mutex_lock(&(pool->pool_mutex));
 
         while(pool->pending_task==0 & pool->destroy!=1){
@@ -68,8 +68,7 @@ static void* thread_function(void* th_pool){
 
         thread_task.priority=(*(pool->request_queue.begin())).priority;
 
-        cout<<"Args: "<<thread_task.args<<" priority: "<<thread_task.priority<<endl;
-
+        cout<<"Priority: "<<thread_task.priority<<endl;
 
         (pool->request_queue).erase(pool->request_queue.begin());
         pool->pending_task--;
@@ -81,22 +80,21 @@ static void* thread_function(void* th_pool){
         //resize
   		if(pool->working_threads<(pool->thread_count/2) && pool->thread_count!=pool->min_threads)
   		{
-        cout<<"=======Shrinking======"<<endl;
+        cout<<"**************Shrinking************"<<endl;
   			pool->thread_count--;
-  			pool->idle_threads--;
+  			pool->curr_threads--;
   			pthread_exit(NULL);
 
         	return NULL;
-  			
   		 }
-	//end
+	   //end
 
       }
         pthread_mutex_unlock(&(pool->pool_mutex));
 
         pthread_exit(NULL);
         return NULL;
-    }
+  }
 
 
 threadpool create_threadpool(int num_threads_in_pool) {
@@ -114,27 +112,24 @@ threadpool create_threadpool(int num_threads_in_pool) {
   // add your code here to initialize the newly created threadpool
   		//resize start
   		pool->max_threads=num_threads_in_pool;
-  		pool->min_threads=3;
-  		pool->idle_threads=num_threads_in_pool>pool->min_threads?pool->min_threads:num_threads_in_pool;
+  		pool->min_threads=50>num_threads_in_pool?num_threads_in_pool:50;
+  		pool->curr_threads=num_threads_in_pool>pool->min_threads?pool->min_threads:num_threads_in_pool;
   		//resize end
 
-        pool->working_threads=0;
-        pool->thread_count=0;
-        pool->pending_task=0;
-        pool->destroy=0;
-        (pool->threads).resize(pool->idle_threads);
-        // (pool->threads).resize(num_threads_in_pool);
+      pool->working_threads=0;
+      pool->thread_count=0;
+      pool->pending_task=0;
+      pool->destroy=0;
+      (pool->threads).resize(pool->curr_threads);
 
-        pthread_mutex_init(&(pool->pool_mutex), NULL);
-        pthread_cond_init(&(pool->cond), NULL);
-        // cout<<"Idle Threads: "<<pool->idle_threads<<endl;
-        for (int i = 0; i <pool->idle_threads; ++i)
-        {
-          /* code */
-          pthread_create(&(pool->threads[i]),NULL,thread_function,static_cast<void *>(pool));
-          pool->thread_count++;
-        }
-        // cout<<"Thread-count: "<<pool->thread_count<<endl;
+      pthread_mutex_init(&(pool->pool_mutex), NULL);
+      pthread_cond_init(&(pool->cond), NULL);
+      for (int i = 0; i <pool->curr_threads; ++i)
+      {
+        /* code */
+        pthread_create(&(pool->threads[i]),NULL,thread_function,static_cast<void *>(pool));
+        pool->thread_count++;
+      }
  
 
   return (threadpool) pool;
@@ -158,28 +153,23 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here,
   	task_thread.function=dispatch_to_here;
     task_thread.args=arg;
   	task_thread.priority=priority;
-  	
-  	// (pool->request_queue).push_back(task_thread);
     (pool->request_queue).insert(task_thread);
   	pool->pending_task++;
   	//resize
-    // cout<<"###############val: "<<(pool->thread_count*3)/4<<endl;
-    // cout<<"###############working: "<<pool->working_threads<<endl;
-    // cout<<"###############Thread count: "<<pool->thread_count<<endl;
   	if(pool->working_threads==(pool->thread_count*3)/4)
   		{
-  			int check=pool->idle_threads;
+  			int check=pool->curr_threads;
   			int create_new=(check*2>=pool->max_threads)?pool->max_threads:check*2;
   			pool->threads.resize(create_new);
-  			cout<<"+++++++++++++resizing "<<pool->working_threads<<" thread count "<<pool->thread_count<<endl;
-  			for (int i = pool->idle_threads; i < create_new; ++i)
+  			cout<<"*************resizing "<<" thread count "<<pool->thread_count<<endl;
+  			for (int i = pool->curr_threads; i < create_new; ++i)
   		  		{
   		  			/* code */
   		  		  pthread_create(&(pool->threads[i]),NULL,thread_function,static_cast<void *>(pool));
   		          pool->thread_count++;
   		  		}
-  		  		pool->idle_threads+=(create_new-pool->idle_threads);
-        cout<<"+++++++++++after resize Thread-count: "<<pool->thread_count<<endl;
+  		  		pool->curr_threads+=(create_new-pool->curr_threads);
+        cout<<"*************after resize Thread-count: "<<pool->thread_count<<endl;
 
   		 }
 	//end
@@ -193,14 +183,12 @@ void destroy_threadpool(threadpool destroyme) {
   _threadpool *pool = (_threadpool *) destroyme;
   // add your code here to kill a threadpool
   	pthread_mutex_lock(&(pool->pool_mutex));
-
   	pool->destroy=1;
   	//wake all threads to complete tasks
   	pthread_cond_broadcast(&(pool->cond));
   	//so that theprocess calling destroy can allow other threads to use pool to finish their
   	//task in request queue
   	pthread_mutex_unlock(&(pool->pool_mutex));
-
   	for (int i = 0; i < pool->thread_count; ++i)
   	{
 	//join the thread, after its execution is done(ensured by pthread_join()), 
@@ -209,17 +197,14 @@ void destroy_threadpool(threadpool destroyme) {
   	}
 
   	if((pool->threads).empty()){
-  		cout<<"deleting.."<<endl;
   		delete (&(pool->threads));
   		delete(&( pool->request_queue));
   		pthread_mutex_lock(&(pool->pool_mutex));
   		pthread_mutex_destroy(&(pool->pool_mutex));
   		pthread_cond_destroy(&(pool->cond));
-
-
   	}
 	//because we used malloc in create thread
   	free(pool);
-cout<<"Done"<<endl;
+cout<<"Done Deleting"<<endl;
 }
 

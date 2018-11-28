@@ -1,19 +1,46 @@
 <html>
 <head>
 	<meta charset="ISO-8859-1"> 
-	<link rel="stylesheet" href="style.css">
+	<!-- <link rel="stylesheet" href="style.css"> -->
 	<link rel="icon" href="data:;base64,=">
-	<!-- <link rel="icon" type="image/vnd.microsoft.icon" href="favicon.ico" /> -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script type="text/javascript">
+		function video(){
+			window.location.href = '/video.html';
+		}
+		function image(){
+			window.location.href = '/image.html';
+		}
+		function pdf(){
+			window.location.href = "https://www.csc2.ncsu.edu/faculty/xjiang4/csc501/readings/lec10-linkerloader.pdf";
+		}
+	</script>
 </head>
-<body class="color">
-	<!-- <script>alert("It works!")</script> -->
-	<a href="video.html">click me </a><br>
-	<a href="image.html"> image page</a><br>
-	<a href="https://www.csc2.ncsu.edu/faculty/xjiang4/csc501/readings/lec10-linkerloader.pdf">PDF link </a><br><br>
+<body class="container">
+<br>
+<br>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      
+    </div>
+  		<h1 style="text-align: center"><font face="verdana" color="green">Test web server</font></h1>
+  </div>
+</nav>
+<div style="text-align: center">
+	<button type="button" class="btn btn-primary" onclick="video()">Video</button>
+
+	<button type="button" class="btn btn-primary" onclick="image()">Image</button>
+	<button type="button" class="btn btn-primary" onclick="pdf()">PDF</button>
+	<br>
+	<br>
 	<video width="320" height="240" controls>
 	<source src="video.mp4" type="video/mp4">
-  	Your browser does not support the video tag.
-</video> 
-<img src="relax-orig.png"/>
+  		Your browser does not support the video tag.
+	</video> 
+	<br>
+	<br>
+	<img src="relax-orig.png"/>
+</div>
 </body>
 </html>
